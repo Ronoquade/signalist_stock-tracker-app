@@ -15,7 +15,7 @@ const Layout = ({ children }: { children : React.ReactNode}) => {
             <section className="auth-right-section">
                 <div className="z-10 relative lg:mt-4 lg:mb-16">
                     <blockquote className="auth-blockquote">
-                        "Signalist turned my watchlist into a winning list. The alerts are spot-on, and I feel more confident in making moves in the market."
+                        &ldquo;Signalist turned my watchlist into a winning list. The alerts are spot-on, and I feel more confident in making moves in the market.&rdquo;
                     </blockquote>
                     <div className="flex items-center justify-between">
                         <div>
