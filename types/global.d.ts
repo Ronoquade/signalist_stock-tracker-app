@@ -14,6 +14,21 @@ declare global {
         preferredIndustry: string;
     };
 
+    type ForgotPasswordFormData = {
+        email: string;
+    };
+
+    type ResetPasswordFormData = {
+        password: string;
+        confirmPassword: string;
+    };
+
+    type PasswordResetEmailData = {
+        email: string;
+        name: string;
+        resetLink: string;
+    };
+
     type CountrySelectProps = {
         name: string;
         label: string;
@@ -214,6 +229,12 @@ declare global {
         alertType: 'upper' | 'lower';
         threshold: number;
         changePercent?: number;
+    };
+
+    type UserForNewsEmail = {
+        id: string;
+        email: string;
+        name: string;
     };
 }
 
