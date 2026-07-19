@@ -21,7 +21,7 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   const [loading, setLoading] = useState(false);
   const [stocks, setStocks] = useState<StockWithWatchlistStatus[]>(initialStocks);
 
-  const isSearchMode = !!searchTerm.trim(); stocks
+  const isSearchMode = !!searchTerm.trim();
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
 
   useEffect(() => {
