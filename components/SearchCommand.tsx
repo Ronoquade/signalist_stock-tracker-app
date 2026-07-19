@@ -99,7 +99,7 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
                 {displayStocks?.map((stock, i) => (
                     <li key={stock.symbol} className='search-item'>
                       <Link
-                          href={'/stocks/${stock.symbol}'}
+                          href={`/stocks/${stock.symbol}`}
                           onClick={handleSelectStock}
                           className='search-item-link'
                       >
