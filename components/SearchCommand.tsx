@@ -65,7 +65,13 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   return (
       <>
         {renderAs === 'text' ? (
-          <span onClick={() => setOpen(true)} className="search-text">
+          <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setOpen(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen(true); }}
+              className="search-text"
+          >
             {label}
           </span>
         ): (
