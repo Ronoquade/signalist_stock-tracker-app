@@ -74,6 +74,9 @@ declare global {
         renderAs?: 'button' | 'text';
         label?: string;
         initialStocks: StockWithWatchlistStatus[];
+        open?: boolean;
+        setOpen?: (open: boolean) => void;
+        className?: string;
     };
 
     type WelcomeEmailData = {
@@ -124,6 +127,20 @@ declare global {
         showTrashIcon?: boolean;
         type?: 'button' | 'icon';
         onWatchlistChange?: (symbol: string, isAdded: boolean) => void;
+    };
+
+    type StockMarketData = {
+        company?: string;
+        currentPrice?: number;
+        changePercent?: number;
+        marketCap?: string;
+        peRatio?: string;
+    };
+
+    type WatchlistActionResult = {
+        success: boolean;
+        message: string;
+        isInWatchlist: boolean;
     };
 
     type QuoteData = {
@@ -183,14 +200,6 @@ declare global {
         news?: MarketNewsArticle[];
     };
 
-    type SearchCommandProps = {
-        open?: boolean;
-        setOpen?: (open: boolean) => void;
-        renderAs?: 'button' | 'text';
-        buttonLabel?: string;
-        buttonVariant?: 'primary' | 'secondary';
-        className?: string;
-    };
 
     type AlertData = {
         symbol: string;

@@ -10,9 +10,11 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import {Button} from "@base-ui/react";
-import {Loader2, Star, TrendingUp} from "lucide-react";
+import {Loader2, TrendingUp} from "lucide-react";
 import Link from "next/link";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
+import {getWatchlistSymbols} from "@/lib/actions/watchlist.actions";
+import WatchlistButton from "@/components/WatchlistButton";
 import {useDebounce} from "@/hooks/useDebounce";
 
 const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks }: SearchCommandProps) => {
@@ -20,6 +22,9 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [stocks, setStocks] = useState<StockWithWatchlistStatus[]>(initialStocks);
+  const [watchlistSymbols, setWatchlistSymbols] = useState<string[]>(
+      () => initialStocks.filter((stock) => stock.isInWatchlist).map((stock) => stock.symbol)
+  );
 
   const isSearchMode = !!searchTerm.trim();
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
@@ -35,6 +40,15 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
+
+  // Refresh the watchlist status of the listed stocks whenever the dialog opens
+  useEffect(() => {
+    if (!open) return;
+
+    getWatchlistSymbols()
+        .then(setWatchlistSymbols)
+        .catch(() => {});
+  }, [open]);
 
   const handleSearch = async () => {
     if (!isSearchMode) return setStocks(initialStocks);
@@ -54,6 +68,10 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
     setOpen(false);
     setSearchTerm('');
     setStocks(initialStocks);
+  };
+
+  const handleWatchlistChange = (symbol: string, isAdded: boolean) => {
+    setWatchlistSymbols((prev) => (isAdded ? [...prev, symbol] : prev.filter((s) => s !== symbol)));
   };
 
   const debouncedSearch = useDebounce((handleSearch), 300);
@@ -102,8 +120,8 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
                   {isSearchMode ? 'Search results' : 'Popular stocks'}
                   {' '}({displayStocks?.length || 0})
                 </div>
-                {displayStocks?.map((stock, i) => (
-                    <li key={stock.symbol} className='search-item'>
+                {displayStocks?.map((stock) => (
+                    <li key={stock.symbol} className='search-item flex items-center gap-2'>
                       <Link
                           href={`/stocks/${stock.symbol}`}
                           onClick={handleSelectStock}
@@ -118,8 +136,14 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
                             {stock.symbol} | {stock.exchange} | {stock.type}
                           </div>
                         </div>
-                        {/*<Star />*/}
                       </Link>
+                      <WatchlistButton
+                          symbol={stock.symbol}
+                          company={stock.name}
+                          isInWatchlist={watchlistSymbols.includes(stock.symbol)}
+                          type='icon'
+                          onWatchlistChange={handleWatchlistChange}
+                      />
                     </li>
                   ))}
               </ul>

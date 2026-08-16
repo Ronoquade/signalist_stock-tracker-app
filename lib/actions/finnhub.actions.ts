@@ -1,6 +1,6 @@
 'use server';
 
-import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
+import { getDateRange, validateArticle, formatArticle, formatMarketCapValue } from '@/lib/utils';
 import { POPULAR_STOCK_SYMBOLS } from '@/lib/constants';
 import { cache } from 'react';
 
@@ -21,6 +21,85 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
 }
 
 export { fetchJSON };
+
+const getFinnhubToken = () => process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+
+// Company profile for a single symbol (revalidated hourly)
+export async function getCompanyProfile(symbol: string): Promise<ProfileData | null> {
+    try {
+        const token = getFinnhubToken();
+        if (!token) {
+            console.error('getCompanyProfile error:', new Error('FINNHUB API key is not configured'));
+            return null;
+        }
+
+        const upper = (symbol || '').trim().toUpperCase();
+        if (!upper) return null;
+
+        const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(upper)}&token=${token}`;
+        return await fetchJSON<ProfileData>(url, 3600);
+    } catch (err) {
+        console.error('getCompanyProfile error:', err);
+        return null;
+    }
+}
+
+// Company name with a graceful fallback to the symbol itself
+export async function getCompanyName(symbol: string): Promise<string> {
+    const upper = (symbol || '').trim().toUpperCase();
+    const profile = await getCompanyProfile(upper);
+    return profile?.name?.trim() || upper;
+}
+
+// Quote + profile + key metrics for a single symbol, used by the watchlist table
+export async function getStockMarketData(symbol: string): Promise<StockMarketData> {
+    try {
+        const token = getFinnhubToken();
+        if (!token) {
+            console.error('getStockMarketData error:', new Error('FINNHUB API key is not configured'));
+            return {};
+        }
+
+        const upper = (symbol || '').trim().toUpperCase();
+        if (!upper) return {};
+
+        const encoded = encodeURIComponent(upper);
+        const [quote, profile, financials] = await Promise.all([
+            fetchJSON<QuoteData>(`${FINNHUB_BASE_URL}/quote?symbol=${encoded}&token=${token}`, 60).catch(() => null),
+            fetchJSON<ProfileData>(`${FINNHUB_BASE_URL}/stock/profile2?symbol=${encoded}&token=${token}`, 3600).catch(
+                () => null
+            ),
+            fetchJSON<FinancialsData>(
+                `${FINNHUB_BASE_URL}/stock/metric?symbol=${encoded}&metric=all&token=${token}`,
+                3600
+            ).catch(() => null),
+        ]);
+
+        const currentPrice = typeof quote?.c === 'number' && quote.c > 0 ? quote.c : undefined;
+        const changePercent = typeof quote?.dp === 'number' ? quote.dp : undefined;
+
+        // Finnhub returns the market capitalization in millions
+        const marketCapMillions = profile?.marketCapitalization;
+        const marketCap =
+            typeof marketCapMillions === 'number' && marketCapMillions > 0
+                ? formatMarketCapValue(marketCapMillions * 1e6)
+                : 'N/A';
+
+        const pe = financials?.metric?.peBasicExclExtraTTM ?? financials?.metric?.peTTM;
+        const peRatio = typeof pe === 'number' && Number.isFinite(pe) && pe > 0 ? pe.toFixed(2) : 'N/A';
+
+        return {
+            company: profile?.name?.trim() || upper,
+            currentPrice,
+            changePercent,
+            marketCap,
+            peRatio,
+        };
+    } catch (err) {
+        console.error('getStockMarketData error:', err);
+        return {};
+    }
+}
 
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
     try {
