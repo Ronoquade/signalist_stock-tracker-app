@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -25,6 +25,7 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   const [watchlistSymbols, setWatchlistSymbols] = useState<string[]>(
       () => initialStocks.filter((stock) => stock.isInWatchlist).map((stock) => stock.symbol)
   );
+  const refreshGeneration = useRef(0);
 
   const isSearchMode = !!searchTerm.trim();
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
@@ -45,8 +46,13 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   useEffect(() => {
     if (!open) return;
 
+    const currentGeneration = ++refreshGeneration.current;
     getWatchlistSymbols()
-        .then(setWatchlistSymbols)
+        .then((symbols) => {
+          if (refreshGeneration.current === currentGeneration) {
+            setWatchlistSymbols(symbols);
+          }
+        })
         .catch(() => {});
   }, [open]);
 
@@ -71,6 +77,7 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   };
 
   const handleWatchlistChange = (symbol: string, isAdded: boolean) => {
+    refreshGeneration.current++;
     setWatchlistSymbols((prev) => (isAdded ? [...prev, symbol] : prev.filter((s) => s !== symbol)));
   };
 

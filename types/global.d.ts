@@ -74,9 +74,6 @@ declare global {
         renderAs?: 'button' | 'text';
         label?: string;
         initialStocks: StockWithWatchlistStatus[];
-        open?: boolean;
-        setOpen?: (open: boolean) => void;
-        className?: string;
     };
 
     type WelcomeEmailData = {
