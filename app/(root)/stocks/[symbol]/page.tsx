@@ -8,10 +8,14 @@ import {
     SYMBOL_INFO_WIDGET_CONFIG,
     TECHNICAL_ANALYSIS_WIDGET_CONFIG,
 } from '@/lib/constants';
+import { getCompanyName } from '@/lib/actions/finnhub.actions';
+import { isInWatchlist } from '@/lib/actions/watchlist.actions';
 
 const StockDetails = async ({ params }: StockDetailsPageProps) => {
     const { symbol } = await params;
     const scriptUrl = 'https://s3.tradingview.com/external-embedding/embed-widget-';
+
+    const [company, isWatchlisted] = await Promise.all([getCompanyName(symbol), isInWatchlist(symbol)]);
 
     return (
         <main className="flex min-h-screen flex-col">
@@ -36,9 +40,9 @@ const StockDetails = async ({ params }: StockDetailsPageProps) => {
 
                 <section className="space-y-6 xl:col-span-1">
                     <WatchlistButton
-                        symbol={symbol}
-                        company={symbol}
-                        isInWatchlist={false}
+                        symbol={symbol.toUpperCase()}
+                        company={company}
+                        isInWatchlist={isWatchlisted}
                     />
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}technical-analysis.js`}
